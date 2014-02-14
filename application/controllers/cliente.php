@@ -8,6 +8,7 @@ class cliente extends CI_Controller {
         $this->load->helper("form");
         $this->load->library("session");
         $this->load->model("cliente_model");
+        $this->load->helper('url');
     }
 
     public function entrar() {
@@ -36,10 +37,10 @@ class cliente extends CI_Controller {
 
     public function administrar_correo($dominio) {
         if ($this->session->get_userdata("dominio_id")) {
-            if($this->input->post("guardar")){
+            if ($this->input->post("guardar")) {
                 
             }
-        }else{
+        } else {
             echo "por la salida";
             $this->load->view("cliente/administrar_correo");
         }
@@ -56,9 +57,11 @@ class cliente extends CI_Controller {
                 if ($this->cliente_model->agregarRegistro($data)) {
                     $titulo = "Nuevo dominio Creado";
                     $mensaje = "Se genero el codigo " . $codigo . " para el dominio " . $this->input->post("dominio");
-                    if ($this->send_mail($titulo, $mensaje)) {
+                    if (true) {/* $this->send_mail($titulo, $mensaje)) { */
                         $this->session->set_flashdata("mensaje", "El dominio se ha creado correctamente");
-                        $this->load->view("cliente/crear_dominio");
+
+                        $datos["query"] = $this->cliente_model->obtenerRegistros();
+                        $this->load->view("cliente/crear_dominio",$datos);
                     } else {
                         $this->session->set_flashdata("error", "No se envio correo");
                         $this->load->view("cliente/crear_dominio");
@@ -68,14 +71,31 @@ class cliente extends CI_Controller {
                     $this->load->view("cliente/crear_dominio");
                 }
             } else {
-                $this->load->view("cliente/crear_dominio");
+
+                $datos["query"] = $this->cliente_model->obtenerRegistros();
+                $this->load->view("cliente/crear_dominio", $datos);
             }
         } else {
             $this->load->view("cliente/entrar");
         }
     }
-    
-    public function salir(){
+
+    public function deleteDominio() {
+        if ($this->session->userdata("dominio_id") == 1) {
+            $id = $this->input->post("id");
+            if ($this->cliente_model->eliminarRegistro($id)) {
+                $mensaje = "<p>Registro eliminado con exito<p>";
+                $resultado = 1;
+            } else {
+                $mensaje = "<p>No se pudo eliminar el registro<p>";
+                $resultado = 0;
+            }
+            $result = json_encode(array("mensaje" => $mensaje, "resultado" => $resultado));
+            echo $result;
+        }
+    }
+
+    public function salir() {
         $this->session->sess_destroy();
         $this->load->view("cliente/entrar");
     }
